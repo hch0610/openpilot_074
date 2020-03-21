@@ -132,6 +132,7 @@ struct CarState {
   steeringRateLimited @29 :Bool;    # if the torque is limited by the rate limiter
   stockAeb @30 :Bool;
   stockFcw @31 :Bool;
+  espDisabled @32 :Bool;
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -153,11 +154,15 @@ struct CarState {
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
 
-  lcaLeft @32 :Bool;
-  lcaRight @33 :Bool;
+  lcaLeft @33 :Bool;
+  lcaRight @34 :Bool;
   
   # which packets this state came from
   canMonoTimes @12: List(UInt64);
+  
+  # blindspot sensors
+  leftBlindspot @35 :Bool; # Is there something blocking the left lane change
+  rightBlindspot @36 :Bool; # Is there something blocking the right lane change
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -385,7 +390,6 @@ struct CarParams {
   mdpsBus @50: Int8;
   sasBus @51: Int8;
   sccBus @52: Int8;
-  autoLcaEnabled @53: Int8;
 
   struct LateralParams {
     torqueBP @0 :List(Int32);
@@ -453,6 +457,7 @@ struct CarParams {
     noOutput @19;  # like silent but without silent CAN TXs
     hondaBoschHarness @20;
     volkswagenPq @21;
+    subaruLegacy @22;  # pre-Global platform
   }
 
   enum SteerControlType {
@@ -480,10 +485,21 @@ struct CarParams {
     fwdCamera @3;
     engine @4;
     unknown @5;
+    transmission @8; # Transmission Control Module
+    srs @9; # airbag
+    gateway @10; # can gateway
+    hud @11; # heads up display
+    combinationMeter @12; # instrument cluster
 
     # Toyota only
     dsu @6;
     apgs @7;
+
+    # Honda only
+    vsa @13; # Vehicle Stability Assist
+    programmedFuelInjection @14;
+    electricBrakeBooster @15;
+    shiftByWire @16;
   }
 
   enum FingerprintSource {
