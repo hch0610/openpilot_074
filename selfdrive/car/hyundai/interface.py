@@ -3,7 +3,7 @@ from cereal import car
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event
 from selfdrive.controls.lib.vehicle_model import VehicleModel
-from selfdrive.car.hyundai.carstate import CarState, get_can_parser, get_can2_parser, get_camera_parser
+from selfdrive.car.hyundai.carstate import CarState
 from selfdrive.car.hyundai.values import Ecu, ECU_FINGERPRINT, CAR, FINGERPRINTS
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -11,27 +11,19 @@ from selfdrive.car.interfaces import CarInterfaceBase
 GearShifter = car.CarState.GearShifter
 ButtonType = car.CarState.ButtonEvent.Type
 
+
+
+
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
-    self.CP = CP
-    self.VM = VehicleModel(CP)
-    self.frame = 0
+    super().__init__(CP, CarController, CarState)       
 
-    self.gas_pressed_prev = False
-    self.brake_pressed_prev = False
-    self.cruise_enabled_prev = False
-    self.low_speed_alert = False
+
     self.vEgo_prev = False
 
     # *** init the major players ***
-    self.CS = CarState(CP)
-    self.cp = get_can_parser(CP)
-    self.cp2 = get_can2_parser(CP)
-    self.cp_cam = get_camera_parser(CP)
+    self.cp2 = self.CS.get_can2_parser(CP)
 
-    self.CC = None
-    if CarController is not None:
-      self.CC = CarController(self.cp.dbc_name, CP.carFingerprint)
 
     self.blinker_status = 0
     self.blinker_timer = 0
@@ -44,7 +36,7 @@ class CarInterface(CarInterfaceBase):
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
-    ret = car.CarParams.new_message()
+    #ret = car.CarParams.new_message()
 
     ret.carName = "hyundai"
     ret.carFingerprint = candidate
@@ -255,7 +247,7 @@ class CarInterface(CarInterfaceBase):
     ret.sasBus = 1 if 688 in fingerprint[1] and 1296 not in fingerprint[1] else 0
     ret.sccBus = 0 if 1056 in fingerprint[0] else 1 if 1056 in fingerprint[1] and 1296 not in fingerprint[1] \
                                                                      else 2 if 1056 in fingerprint[2] else -1
-    ret.autoLcaEnabled = 1
+    ret.autoLcaEnabled = 0
 
     return ret
 

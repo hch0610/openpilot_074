@@ -3,7 +3,8 @@ from selfdrive.controls.lib.drive_helpers import get_steer_max
 from cereal import car
 from cereal import log
 from selfdrive.kegman_conf import kegman_conf
-
+from common.numpy_fast import interp
+import common.log as  trace1
 import common.MoveAvg as  moveavg1
 from selfdrive.config import Conversions as CV
 
@@ -46,24 +47,18 @@ class LatControlPID():
     pid_log.steerAngle = float(angle_steers)
     pid_log.steerRate = float(angle_steers_rate)
 
-    v_ego_kph = v_ego * CV.MS_TO_KPH
+
 
     if v_ego < 0.3 or not active:
       output_steer = 0.0
       pid_log.active = False
+      #self.angle_steers_des = 0.0
       self.pid.reset()
-      self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 500 )
+      self.angle_steers_des = path_plan.angleSteers
     else:
-      if v_ego_kph < 10:
-        self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 200 )
-      elif v_ego_kph < 20:
-        self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 100 )
-      elif v_ego_kph < 30:
-        self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 50 )
-      elif v_ego_kph < 40:
-        self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 10 )
-      else:
-        self.angle_steers_des = self.movAvg.get_data( path_plan.angleSteers, 5 )
+      self.angle_steers_des = path_plan.angleSteers
+
+      
 
       steers_max = get_steer_max(CP, v_ego)
       self.pid.pos_limit = steers_max

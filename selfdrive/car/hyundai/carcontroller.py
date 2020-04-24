@@ -1,5 +1,6 @@
 from cereal import car
 from common.numpy_fast import clip
+from selfdrive.car.hyundai.spdcontroller  import SpdController
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, \
                                              create_scc12, create_mdps12
@@ -21,6 +22,8 @@ ACCEL_HYST_GAP = 0.02  # don't change accel command for small oscilalitons withi
 ACCEL_MAX = 1.5  # 1.5 m/s2
 ACCEL_MIN = -3.0 # 3   m/s2
 ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
+
+
 
 def accel_hysteresis(accel, accel_steady):
 
@@ -65,9 +68,9 @@ def process_hud_alert(enabled, button_on, fingerprint, visual_alert, left_line,
   return hud_alert, lane_visible, left_lane_warning, right_lane_warning
 
 class CarController():
-  def __init__(self, dbc_name, car_fingerprint):
+  def __init__(self, dbc_name, CP, VM):
     self.packer = CANPacker(dbc_name)
-    self.car_fingerprint = car_fingerprint
+    self.car_fingerprint = CP.carFingerprint
     self.accel_steady = 0
     self.apply_steer_last = 0
     self.steer_rate_limited = False
@@ -80,6 +83,13 @@ class CarController():
     self.lkas_button = 1
     self.lkas_button_last = 0
     self.longcontrol = 0 #TODO: make auto
+
+  def limit_ctrl(self, value, limit ):
+      if value > limit:
+          value = limit
+      elif  value < -limit:
+          value = -limit
+      return value
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, visual_alert,
               left_line, right_line, left_lane_depart, right_lane_depart):
@@ -98,10 +108,9 @@ class CarController():
     self.steer_rate_limited = new_steer != apply_steer
 
     ### LKAS button to temporarily disable steering
-#    if not CS.lkas_error:
-#      if CS.lkas_button_on != self.lkas_button_last:
-#        self.lkas_button = not self.lkas_button
-#      self.lkas_button_last = CS.lkas_button_on
+    if not CS.lkas_error:
+      if self.lkas_button != CS.lkas_button_on:
+         self.lkas_button = CS.lkas_button_on
 
     # disable if steer angle reach 90 deg, otherwise mdps fault in some models
     if self.car_fingerprint == CAR.GENESIS:
@@ -186,6 +195,39 @@ class CarController():
     # reset lead distnce after the car starts moving
     elif self.last_lead_distance != 0:
       self.last_lead_distance = 0  
+    else:
+      #acc_mode, clu_speed = self.long_speed_cntrl( v_ego_kph, CS, actuators )
+      btn_type, clu_speed = self.SC.update( v_ego_kph, CS, sm, actuators )   # speed controller spdcontroller.py
+
+      if v_ego_kph < 30:
+          self.resume_cnt = 0
+          self.sc_active_timer = 0
+          self.sc_btn_type = Buttons.NONE
+      elif self.sc_btn_type != Buttons.NONE:
+          pass
+      elif CS.cruise_set_timer1:
+          pass
+      elif self.sc_active_timer2:
+          self.sc_active_timer2 -= 1
+      elif btn_type != Buttons.NONE:
+          self.sc_btn_type = btn_type
+          self.sc_clu_speed = clu_speed
+
+
+      if self.sc_btn_type != Buttons.NONE:
+        if self.sc_active_timer < 5:
+          self.sc_active_timer += 1
+          self.sc_active_timer2 = 5
+          self.traceCC.add( 'sc_btn_type={}  clu_speed={}  cnt={}'.format( self.sc_btn_type, self.sc_clu_speed, self.sc_active_timer ) )
+          can_sends.append(create_clu11(self.packer, CS.scc_bus, CS.clu11, self.sc_btn_type, self.sc_clu_speed, self.resume_cnt))
+          self.resume_cnt += 1
+        else:
+          self.traceCC.add( 'Buttons.NONE' )
+          self.resume_cnt = 0
+          self.sc_active_timer = 0
+          self.sc_btn_type = Buttons.NONE
+
+  
 
     self.lkas11_cnt += 1
 
