@@ -25,6 +25,8 @@ class CarState():
     self.sas_bus = CP.sasBus
     self.scc_bus = CP.sccBus
 
+    self.cruise_set_speed_kph = 0
+
     # Q = np.matrix([[10.0, 0.0], [0.0, 100.0]])
     # R = 1e3
     self.v_ego_kf = KF1D(x0=[[0.0], [0.0]],
@@ -38,7 +40,26 @@ class CarState():
 
     v_ego_x = self.v_ego_kf.update(v_ego_raw)
     return float(v_ego_x[0]), float(v_ego_x[1])
-	
+
+
+
+  def update_cruiseSW( self, clu_Vanz,  old_clu_CruiseSwState ):
+    if self.pcm_acc_status:
+      if old_clu_CruiseSwState != self.clu_CruiseSwState:
+          if self.clu_CruiseSwState == 1:   # up
+              self.cruise_set_speed_kph = clu_Vanz
+          elif self.clu_CruiseSwState == 2:  # dn
+              self.cruise_set_speed_kph = clu_Vanz
+
+          self.cruise_set_timer1 = 50
+
+    else:
+      self.cruise_set_speed_kph = self.VSetDis
+
+    if self.cruise_set_timer1:
+      self.cruise_set_timer1 -= 1
+    
+  
   def update(self, cp, cp2, cp_cam):
 
     cp_mdps = cp2 if self.mdps_bus else cp
@@ -50,6 +71,8 @@ class CarState():
     self.prev_right_blinker_on = self.right_blinker_on
     self.prev_left_blinker_flash = self.left_blinker_flash
     self.prev_right_blinker_flash = self.right_blinker_flash
+    old_clu_CruiseSwState = self.clu_CruiseSwState    
+
 
     self.door_all_closed = True
     self.seatbelt = cp.vl["CGW1"]['CF_Gway_DrvSeatBeltSw']
@@ -73,6 +96,8 @@ class CarState():
     
     self.clu_Vanz = cp.vl["CLU11"]["CF_Clu_Vanz"]
     self.v_ego = self.clu_Vanz * CV.KPH_TO_MS
+
+    self.update_cruiseSW(  self.clu_Vanz, old_clu_CruiseSwState )
 
     self.lead_distance = cp_scc.vl["SCC11"]['ACC_ObjDist'] if not self.no_radar else 0
     self.lead_objspd = cp_scc.vl["SCC11"]['ACC_ObjRelSpd'] if not self.no_radar else 0
