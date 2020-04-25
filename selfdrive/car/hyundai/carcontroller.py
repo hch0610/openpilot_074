@@ -79,6 +79,12 @@ class CarController():
     self.lkas_button_last = 0
     self.longcontrol = 0 #TODO: make auto
 
+    self.SC = SpdController()
+    self.sc_active_timer = 0 
+    self.sc_active_timer2 = 0     
+    self.sc_btn_type = Buttons.NONE
+    self.sc_clu_speed = 0   
+
   def limit_ctrl(self, value, limit ):
       if value > limit:
           value = limit
