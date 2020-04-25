@@ -74,6 +74,7 @@ class CarState():
     self.clu_Vanz = cp.vl["CLU11"]["CF_Clu_Vanz"]
     self.v_ego = self.clu_Vanz * CV.KPH_TO_MS
 
+    self.driverOverride = cp.vl["TCS13"]["DriverOverride"]     # 1 Acc,  2 bracking, 0 Normal
     self.VSetDis = cp_scc.vl["SCC11"]['VSetDis']
     self.low_speed_lockout = self.v_ego_raw < 1.0
 
