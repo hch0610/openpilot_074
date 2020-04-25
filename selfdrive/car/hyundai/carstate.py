@@ -26,6 +26,7 @@ class CarState():
     self.scc_bus = CP.sccBus
 
     self.cruise_set_speed_kph = 0
+    self.clu_CruiseSwState = 0
 
     # Q = np.matrix([[10.0, 0.0], [0.0, 100.0]])
     # R = 1e3
