@@ -152,7 +152,7 @@ class SpdController():
                                                   2*jerk_limits[1], jerk_limits[0],
                                                   LON_MPC_STEP)
 
-    model_speed = self.movAvg.get_min( model_speed, 50 )
+    model_speed = self.movAvg.get_min( model_speed, 20 )
 
     return model_speed
 
