@@ -94,6 +94,7 @@ class CarState():
     self.v_ego_raw = (self.v_wheel_fl + self.v_wheel_fr + self.v_wheel_rl + self.v_wheel_rr) / 4.
     v_ego, self.a_ego = self.update_speed_kf(self.v_ego_raw)
     
+    self.clu_CruiseSwState = cp.vl["CLU11"]["CF_Clu_CruiseSwState"]
     self.clu_Vanz = cp.vl["CLU11"]["CF_Clu_Vanz"]
     self.v_ego = self.clu_Vanz * CV.KPH_TO_MS
 
