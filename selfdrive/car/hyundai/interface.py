@@ -27,6 +27,7 @@ class CarInterface(CarInterfaceBase):
 
     self.blinker_status = 0
     self.blinker_timer = 0
+    self.lkas_button_alert = 0
 
   @staticmethod
   def compute_gb(accel, speed):
@@ -378,6 +379,8 @@ class CarInterface(CarInterfaceBase):
 #      self.lkas_button_alert = True if self.CC.lkas_button else False
 #    if self.CP.carFingerprint in [CAR.GRANDEUR_HYBRID, CAR.K7_HYBRID]:
 #      self.lkas_button_alert = False
+
+    self.lkas_button_alert = not self.CC.lkas_button 
 
     events = []
     if not ret.gearShifter == GearShifter.drive:
