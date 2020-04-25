@@ -13,7 +13,7 @@ from selfdrive.controls.lib.speed_smoother import speed_smoother
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 
 
-from selfdrive.car.hyundai.values import Buttons, SteerLimitParams, LaneChangeParms
+from selfdrive.car.hyundai.values import Buttons, SteerLimitParams
 from common.numpy_fast import clip, interp
 
 from selfdrive.config import RADAR_TO_CAMERA
