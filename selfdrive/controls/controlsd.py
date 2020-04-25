@@ -622,9 +622,9 @@ def controlsd_thread(sm=None, pm=None, can_sock=None):
     #trace1.printf( 'hyundai_lkas={:.0f}  cruse={},  cruise_kph={:.0f}'.format(hyundai_lkas,  CS.cruiseState.enabled,  v_cruise_kph) )    
 
     if not CS.cruiseState.enabled and not hyundai_lkas:
-        hyundai_timer1 += 1
-        if hyundai_timer1 > 50:
-      hyundai_lkas = True
+      hyundai_timer1 += 1
+      if hyundai_timer1 > 50:
+        hyundai_lkas = True
 
 def main(sm=None, pm=None, logcan=None):
   controlsd_thread(sm, pm, logcan)
