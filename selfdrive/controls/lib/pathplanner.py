@@ -12,16 +12,20 @@ from selfdrive.kegman_conf import kegman_conf
 from selfdrive.config import Conversions as CV
 from common.params import Params
 from common.numpy_fast import interp
-import cereal.messaging as messaging
 from cereal import log
+
+import cereal.messaging as messaging
+
+import common.MoveAvg as  moveavg1
+
 
 LaneChangeState = log.PathPlan.LaneChangeState
 LaneChangeDirection = log.PathPlan.LaneChangeDirection
 LaneChangeBSM = log.PathPlan.LaneChangeBSM
 
-import common.MoveAvg as  moveavg1
-
 LOG_MPC = os.environ.get('LOG_MPC', True)
+
+#tracePP = trace1.Loger("pathPlanner")
 
 DESIRES = {
   LaneChangeDirection.none: {
@@ -252,17 +256,18 @@ class PathPlanner():
 
       self.mpc_frame = 0
 
+
+    abs_angle_steers = abs(angle_steers)
     if v_ego_kph < 10:
       self.steerRatio = self.sR[0] * 0.6
     elif v_ego_kph > 40:  # 11.111:
       # boost steerRatio by boost amount if desired steer angle is high
-      abs_angle_steers = abs(angle_steers)
       self.steerRatio_new = interp( abs_angle_steers, self.sRBP, self.sR)
 
       self.sR_delay_counter += 1
       delta_angle = abs_angle_steers - self.steerAngle_new
       if delta_angle < -1.0 and self.sR_delay_counter > 5:
-          self.sR_delay_counter += 5
+          self.sR_delay_counter += 20
 
       if self.sR_delay_counter < self.sR_time:
         if self.steerRatio_new > self.steerRatio:
@@ -345,9 +350,9 @@ class PathPlanner():
     self.angle_steers_des_mpc = float(math.degrees(delta_desired * self.steerRatio) + angle_offset)
 
 
-    if v_ego_kph < 30:
-        xp = [0,5,20,30]
-        fp1 = [0,0.25,0.5,1]
+    if v_ego_kph < 40:
+        xp = [0,5,20,40]
+        fp1 = [0.1,0.25,0.5,1]
         des_ratio = interp( v_ego_kph, xp, fp1 )
 
         fp2 = [0.1,0.2,0.5,1]
@@ -356,17 +361,17 @@ class PathPlanner():
         self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, limit_ratio, angle_steers )
 
         if v_ego_kph < 5:
-            self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 200 )
-        elif v_ego_kph < 10:
-            self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 50 )
-        elif v_ego_kph < 20:
             self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 10 )
+        elif v_ego_kph < 10:
+            self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 5 )
+    elif abs_angle_steers > 3:
+        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 5, angle_steers )
     else:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 10, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 1.5, angle_steers )
 
 
     if self.LP.l_prob < 0.45 and self.LP.r_prob < 0.45:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 1, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 0.1, angle_steers )
 
     #if active:
     #   log_str = 'v_ego={:.1f} {}'.format( v_ego * CV.MS_TO_KPH, log_str )

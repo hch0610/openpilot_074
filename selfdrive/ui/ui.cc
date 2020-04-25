@@ -347,6 +347,34 @@ void handle_message(UIState *s, Message * msg) {
 
     s->scene.decel_for_model = datad.decelForModel;
 
+
+
+// PID
+    s->scene.pid.p = datad.upAccelCmd;
+    s->scene.pid.i = datad.uiAccelCmd;
+    s->scene.pid.f = datad.ufAccelCmd;
+
+// debug Message
+    s->scene.status.vCurvature = datad.vCurvature;
+    s->scene.status.nCanError = datad.canErrorCounter;
+    if (datad.alertTextMsg1.str) 
+    {
+      snprintf(s->scene.status.alert_text1, sizeof(s->scene.status.alert_text1), "%s", datad.alertTextMsg1.str);
+    } 
+    else 
+    {
+      s->scene.status.alert_text1[0] = '\0';
+    }
+
+    if (datad.alertTextMsg2.str) 
+    {
+      snprintf(s->scene.status.alert_text2, sizeof(s->scene.status.alert_text2), "%s", datad.alertTextMsg2.str);
+    } 
+    else 
+    {
+      s->scene.status.alert_text2[0] = '\0';
+    }
+
     // getting steering related data for dev ui
     s->scene.angleSteersDes = datad.angleSteersDes;
 

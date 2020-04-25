@@ -5,7 +5,7 @@ from cereal import log
 from selfdrive.kegman_conf import kegman_conf
 from common.numpy_fast import interp
 import common.log as  trace1
-import common.MoveAvg as  moveavg1
+
 from selfdrive.config import Conversions as CV
 
 class LatControlPID():
@@ -18,7 +18,6 @@ class LatControlPID():
     self.angle_steers_des = 0.
     self.mpc_frame = 0
 
-    self.movAvg = moveavg1.MoveAvg()
 
   def reset(self):
     self.pid.reset()
@@ -64,6 +63,8 @@ class LatControlPID():
       self.pid.pos_limit = steers_max
       self.pid.neg_limit = -steers_max
       steer_feedforward = self.angle_steers_des   # feedforward desired angle
+
+
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
         # TODO: feedforward something based on path_plan.rateSteers
         steer_feedforward -= path_plan.angleOffset   # subtract the offset, since it does not contribute to resistive torque

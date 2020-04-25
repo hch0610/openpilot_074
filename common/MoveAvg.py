@@ -36,7 +36,6 @@ class MoveAvg():
 
 
 
-
     def get_min(self, steer_angle_dest, max_cnt ):
         self.data_steer.append( steer_angle_dest )
         self.data_cnt += 1

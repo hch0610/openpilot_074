@@ -186,6 +186,22 @@ typedef struct UIScene {
   int paTemp;
   int hwType;
   int satelliteCount;
+
+
+  struct _PID_
+  {
+    float  p;
+    float  i;
+    float  f;
+  } pid; 
+
+  struct _STATUS_
+  {
+      float vCurvature; 
+      int  nCanError;
+      char alert_text1[512];
+      char alert_text2[512];
+  } status;
 } UIScene;
 
 typedef struct {
