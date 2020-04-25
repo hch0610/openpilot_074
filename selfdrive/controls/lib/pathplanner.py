@@ -65,9 +65,9 @@ class PathPlanner():
     self.mpc_frame = 0
     self.sR_delay_counter = 0
     self.steerRatio_new = 0.0
-      self.steerAngle_new = 0.0
+    self.steerAngle_new = 0.0
     self.sR_time = 1
-      self.nCommand = 0
+    self.nCommand = 0
 
     kegman = kegman_conf(CP)
     if kegman.conf['steerRatio'] == "-1":
@@ -88,12 +88,12 @@ class PathPlanner():
 
     self.lane_change_state = LaneChangeState.off
     self.lane_change_direction = LaneChangeDirection.none
-      self.lane_change_timer1 = 0
-      self.lane_change_timer2 = 0
-      self.lane_change_timer3 = 0
+    self.lane_change_timer1 = 0
+    self.lane_change_timer2 = 0
+    self.lane_change_timer3 = 0
     self.lane_change_BSM = LaneChangeBSM.off
 
-      self.movAvg = moveavg1.MoveAvg()
+    self.movAvg = moveavg1.MoveAvg()
 
 
 
