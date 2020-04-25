@@ -1,5 +1,6 @@
 from cereal import car
 from common.numpy_fast import clip
+from selfdrive.config import Conversions as CV
 from selfdrive.car.hyundai.spdcontroller  import SpdController
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, \
@@ -86,9 +87,10 @@ class CarController():
       return value
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, visual_alert,
-              left_line, right_line, left_lane_depart, right_lane_depart):
+              left_line, right_line, left_lane_depart, right_lane_depart, sm):
 
     # *** compute control surfaces ***
+    v_ego_kph = CS.v_ego * CV.MS_TO_KPH
 
     # gas and brake
     apply_accel = actuators.gas - actuators.brake
