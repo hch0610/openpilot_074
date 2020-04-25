@@ -254,6 +254,12 @@ ALERTS = [
       "차량속도가 낮아 조향제어가 일시적으로 비활성화 되었습니다",
       AlertStatus.userPrompt, AlertSize.mid,
       Priority.MID, VisualAlert.steerRequired, AudibleAlert.none, 0., 0.4, .3),
+  Alert(
+      "preStoped",
+      "잠시멈춤",
+      "앞차 출발시 자동 출발 합니다.",
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.MID, VisualAlert.none, AudibleAlert.none, 0., 0.4, .3),
 
   Alert(
       "debugAlert",

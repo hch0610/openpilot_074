@@ -99,6 +99,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     rightLCAbsm @73;
     leftLCAbsm @74;
     preventLCA @75;
+    preStoped @76;
   }
 }
 
