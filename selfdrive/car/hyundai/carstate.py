@@ -74,6 +74,9 @@ class CarState():
     self.clu_Vanz = cp.vl["CLU11"]["CF_Clu_Vanz"]
     self.v_ego = self.clu_Vanz * CV.KPH_TO_MS
 
+    self.lead_distance = cp_scc.vl["SCC11"]['ACC_ObjDist'] if not self.no_radar else 0
+    self.lead_objspd = cp_scc.vl["SCC11"]['ACC_ObjRelSpd'] if not self.no_radar else 0
+
     self.driverOverride = cp.vl["TCS13"]["DriverOverride"]     # 1 Acc,  2 bracking, 0 Normal
     self.VSetDis = cp_scc.vl["SCC11"]['VSetDis']
     self.low_speed_lockout = self.v_ego_raw < 1.0
