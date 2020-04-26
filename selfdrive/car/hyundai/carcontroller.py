@@ -148,7 +148,7 @@ class CarController():
     apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.steer_torque_driver, param)
     self.steer_rate_limited = new_steer != apply_steer
 
-    # steer torque??변?�량 감시.
+    # steer torque??변?�량 감시.
     delta = apply_steer - self.apply_steer_last
     if delta > 50:
       apply_steer = self.apply_steer_last + 50
@@ -206,7 +206,7 @@ class CarController():
     if CS.left_blinker_on or CS.right_blinker_on:
         self.steer_torque_over = False
         self.turning_signal_timer = 500  # Disable for 5.0 Seconds after blinker turned off
-      elif CS.left_blinker_flash or CS.right_blinker_flash:
+    elif CS.left_blinker_flash or CS.right_blinker_flash:
         self.steer_torque_over = False
         self.turning_signal_timer = 500
 
