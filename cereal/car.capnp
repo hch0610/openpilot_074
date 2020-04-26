@@ -94,12 +94,14 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     driverMonitorLowAcc @68;
     manualSteeringRequired @69;
     manualSteeringRequiredBlinkersOn @70;
-	turningIndicatorOn @71;
+	  turningIndicatorOn @71;
     lkasButtonOff @72;
     rightLCAbsm @73;
     leftLCAbsm @74;
     preventLCA @75;
     preStoped @76;
+    steerTorqueOver @75;
+    ldwPermanent @76;    
   }
 }
 
