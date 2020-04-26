@@ -78,14 +78,14 @@ ALERTS = [
       "",
       "",
       AlertStatus.normal, AlertSize.none,
-      Priority.MID, VisualAlert.none, AudibleAlert.chimeEngage, 4., 0., 0.),
+      Priority.MID, VisualAlert.none, AudibleAlert.chimeEngage, .2, 0., 0.),
 
   Alert(
       "disable",
       "",
       "",
       AlertStatus.normal, AlertSize.none,
-      Priority.MID, VisualAlert.none, AudibleAlert.chimeDisengage, 4., 0., 0.),
+      Priority.MID, VisualAlert.none, AudibleAlert.chimeDisengage, .2, 0., 0.),
 
   Alert(
       "fcw",
@@ -105,6 +105,13 @@ ALERTS = [
       "steerSaturated",
       "핸들을 잡아주세요",
       "스티어링 토크가 높습니다",
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, 1., 2., 3.),
+
+  Alert(
+      "steerTorqueOver",
+      "핸들을 잡아주세요",
+      "스티어링 토크 일시 비활성화",
       AlertStatus.userPrompt, AlertSize.mid,
       Priority.LOW, VisualAlert.none, AudibleAlert.none, 1., 2., 3.),
 
@@ -148,7 +155,7 @@ ALERTS = [
       "도로상황에 주의하세요",
       "주행 산만",
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeRoadWarning, 4., .1, .1),
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeWarning2, .1, .1, .1),
 
   Alert(
       "driverDistracted",
@@ -197,7 +204,7 @@ ALERTS = [
       "오픈파일럿 사용준비가 되었습니다",
       "안전운전을 위해 항상 핸들을 잡고 도로교통 상황을 주시하세요",
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOWER, VisualAlert.none, AudibleAlert.chimeReady, 5., 0., 5.),
+      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 5.),
 
   Alert(
       "startupMaster",
@@ -307,7 +314,7 @@ ALERTS = [
       "핸들을 잡아주세요",
       "도로 상황 불안으로 차선변경이 취소되었습니다",
       AlertStatus.critical, AlertSize.full,
-      Priority.HIGH, VisualAlert.none, AudibleAlert.chimeWarningRepeat, .4, 3., 3.,),
+      Priority.MID, VisualAlert.none, AudibleAlert.none, 0., 0.4, .3),
 
 
   Alert(
@@ -315,7 +322,7 @@ ALERTS = [
       "핸들을 잡아주세요",
       "전방 영상 인식이 불확실합니다",
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeViewUncertain, 6., 2., 3.),
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., 3.),
 
   # Non-entry only alerts
   Alert(
@@ -415,7 +422,7 @@ ALERTS = [
       "오픈파일럿 사용 경고",
       "기어가 드라이브 상태가 아닙니다",
       AlertStatus.critical, AlertSize.full,
-      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeGearDrive, 4., 2., 2.),
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, 2., 2.),
 
   Alert(
       "calibrationInvalid",
@@ -436,14 +443,14 @@ ALERTS = [
       "오픈파일럿 사용 경고",
       "도어가 열려있습니다",
       AlertStatus.critical, AlertSize.full,
-      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeDoorOpen, .1, 2., 2.),
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, 2., 2.),
 
   Alert(
       "seatbeltNotLatched",
       "오픈파일럿 사용 경고",
       "안전벨트 미체결",
       AlertStatus.critical, AlertSize.full,
-      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeSeatBelt, .1, 2., 2.),
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, 2., 2.),
 
   Alert(
       "espDisabled",
@@ -587,7 +594,7 @@ ALERTS = [
       "오픈파일럿 사용 불가",
       "기어가 드라이브 상태가 아닙니다",
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOW, VisualAlert.none, AudibleAlert.chimeGearDrive, 4., 2., 3.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.chimeError, .4, 2., 3.),
 
   Alert(
       "calibrationInvalidNoEntry",
@@ -608,14 +615,14 @@ ALERTS = [
       "오픈파일럿 사용 불가",
       "도어가 열려있습니다",
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOW, VisualAlert.none, AudibleAlert.chimeDoorOpen, 3., 2., 3.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.chimeError, .4, 2., 3.),
 
   Alert(
       "seatbeltNotLatchedNoEntry",
       "오픈파일럿 사용 불가",
       "안전벨트를 체결 하세요",
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOW, VisualAlert.none, AudibleAlert.chimeSeatBelt, 4., 2., 3.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.chimeError, .4, 2., 3.),
 
   Alert(
       "espDisabledNoEntry",
@@ -834,5 +841,5 @@ ALERTS = [
       "핸들을 잡아주세요",
       "차선 이탈 감지",
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeLaneDeparture, 5., 2., 3.),
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimePrompt, 1., 2., 3.),
 ]
