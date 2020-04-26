@@ -100,8 +100,8 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     leftLCAbsm @74;
     preventLCA @75;
     preStoped @76;
-    steerTorqueOver @75;
-    ldwPermanent @76;    
+    steerTorqueOver @77;
+    ldwPermanent @78;    
   }
 }
 
