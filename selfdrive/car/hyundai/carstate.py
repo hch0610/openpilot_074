@@ -9,7 +9,7 @@ import common.log as trace1
 
 GearShifter = car.CarState.GearShifter
 
-  def get_can_parser(CP):
+def get_can_parser(CP):
 
     signals = [
       # sig_name, sig_address, default
@@ -160,7 +160,7 @@ GearShifter = car.CarState.GearShifter
       ]
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
 
-  def get_can2_parser(CP):
+def get_can2_parser(CP):
     signals = []
     checks = []
     if CP.mdpsBus == 1:
