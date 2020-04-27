@@ -240,7 +240,7 @@ class PathPlanner():
 
     v_ego_kph = v_ego * CV.MS_TO_KPH
 
-    self.model_speed = self.calc_va( sm, v_ego )
+    self.model_speed = self.SC.calc_va( sm, v_ego )
     
     # Run MPC
     self.angle_steers_des_prev = self.angle_steers_des_mpc
