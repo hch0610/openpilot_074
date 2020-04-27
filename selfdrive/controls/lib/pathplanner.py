@@ -13,9 +13,9 @@ from selfdrive.config import Conversions as CV
 from common.params import Params
 from common.numpy_fast import interp
 from cereal import log
+from selfdrive.car.hyundai.spdcontroller  import SpdController
 
 import cereal.messaging as messaging
-
 import common.MoveAvg as  moveavg1
 
 
@@ -25,7 +25,7 @@ LaneChangeBSM = log.PathPlan.LaneChangeBSM
 
 LOG_MPC = os.environ.get('LOG_MPC', True)
 
-#tracePP = trace1.Loger("pathPlanner")
+tracePP = trace1.Loger("pathPlanner")
 
 DESIRES = {
   LaneChangeDirection.none: {
@@ -67,11 +67,14 @@ class PathPlanner():
     self.path_offset_i = 0.0
 
     self.mpc_frame = 0
+    self.lane_change_ll_prob = 1.0    
     self.sR_delay_counter = 0
     self.steerRatio_new = 0.0
     self.steerAngle_new = 0.0
     self.sR_time = 1
     self.nCommand = 0
+    self.SC = SpdController()
+    self.model_speed = 255    
 
     kegman = kegman_conf(CP)
     if kegman.conf['steerRatio'] == "-1":
@@ -127,7 +130,7 @@ class PathPlanner():
     self.angle_steers_des_time = 0.0
 
 
-  def lane_change( self, sm, lca_left, lca_right, lane_change_prob ):
+  def lane_change_fun( self, sm, lca_left, lca_right, lane_change_prob ):
       if self.nCommand == 0:
           self.lane_change_timer1 = 0
           self.lane_change_timer2 = 0
@@ -173,6 +176,7 @@ class PathPlanner():
 
           if torque_applied:
               self.lane_change_timer2 = 0
+              self.lane_change_ll_prob = 1.0
               self.lane_change_state = LaneChangeState.laneChangeStarting
               self.nCommand=3
 
@@ -192,19 +196,22 @@ class PathPlanner():
           self.lane_change_timer2 += 1
           if cancel_applied:
               self.nCommand=5  # cancel
-          elif lane_change_prob > 0.5 or self.lane_change_timer2 > 200:
-              self.lane_change_timer2 = 0
-              self.lane_change_state = LaneChangeState.laneChangeFinishing
-              self.nCommand=4
           else:
+            # fade out lanelines over 1s
+            self.lane_change_ll_prob = max(self.lane_change_ll_prob - DT_MDL, 0.0)
+            # 98% certainty
+            if lane_change_prob < 0.02 and self.lane_change_ll_prob < 0.01:
+              self.lane_change_state = LaneChangeState.laneChangeFinishing
               self.lane_change_timer2 = 0
+              self.nCommand=4
+
 
       elif self.nCommand == 4:   # laneChangeFinishing
-          if sm['carState'].leftBlinker or sm['carState'].rightBlinker:
-              pass
-          elif lane_change_prob < 0.1:
-              self.lane_change_state = LaneChangeState.off
-              self.nCommand=0
+          # fade in laneline over 1s
+          self.lane_change_ll_prob = min(self.lane_change_ll_prob + DT_MDL, 1.0)
+          if self.lane_change_ll_prob > 0.99:
+            self.lane_change_state = LaneChangeState.off
+            self.nCommand=0
 
       elif self.nCommand == 5:  # cancel
           self.lane_change_timer4 += 1
@@ -221,7 +228,6 @@ class PathPlanner():
 
 
 
-
   def update(self, sm, pm, CP, VM):
     v_ego = sm['carState'].vEgo
     angle_steers = sm['carState'].steeringAngle
@@ -234,6 +240,8 @@ class PathPlanner():
 
     v_ego_kph = v_ego * CV.MS_TO_KPH
 
+    self.model_speed = self.calc_va( sm, v_ego )
+    
     # Run MPC
     self.angle_steers_des_prev = self.angle_steers_des_mpc
     VM.update_params(sm['liveParameters'].stiffnessFactor, sm['liveParameters'].steerRatio)
@@ -266,20 +274,20 @@ class PathPlanner():
 
       self.sR_delay_counter += 1
       delta_angle = abs_angle_steers - self.steerAngle_new
-      if delta_angle < -1.0 and self.sR_delay_counter > 5:
-          self.sR_delay_counter += 20
+      if delta_angle < -3.0 and self.sR_delay_counter > 5:
+        self.sR_delay_counter += 20
 
       if self.sR_delay_counter < self.sR_time:
         if self.steerRatio_new > self.steerRatio:
           self.steerRatio = self.steerRatio_new
           self.steerAngle_new = abs_angle_steers
+        else:
+          self.steerRatio = (self.steerRatio_new + self.steerRatio) * 0.5
+          self.sR_delay_counter = 0
+          self.steerAngle_new = 0
       else:
-        self.steerRatio = (self.steerRatio_new + self.steerRatio) * 0.5
-        self.sR_delay_counter = 0
+        self.steerRatio = self.sR[0]
         self.steerAngle_new = 0
-    else:
-      self.steerRatio = self.sR[0]
-      self.steerAngle_new = 0
 
 
     #print("steerRatio = ", self.steerRatio)
@@ -295,7 +303,7 @@ class PathPlanner():
         self.lane_change_direction = LaneChangeDirection.none
     else:
       lane_change_prob = self.LP.l_lane_change_prob + self.LP.r_lane_change_prob
-      self.lane_change( sm, lca_left, lca_right, lane_change_prob )
+      self.lane_change_fun( sm, lca_left, lca_right, lane_change_prob )
 
       if self.lane_change_state in [LaneChangeState.off, LaneChangeState.preLaneChange]:
         self.lane_change_timer1 = 0
@@ -313,22 +321,13 @@ class PathPlanner():
 
     # Turn off lanes during lane change
     if desire == log.PathPlan.Desire.laneChangeRight or desire == log.PathPlan.Desire.laneChangeLeft:
-      #self.LP.l_prob = 0.
-      #self.LP.r_prob = 0.
+      self.LP.l_prob *= self.lane_change_ll_prob
+      self.LP.r_prob *= self.lane_change_ll_prob      
       self.libmpc.init_weights(MPC_COST_LAT.PATH / 10.0, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
     else:
       self.libmpc.init_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
 
     self.LP.update_d_poly(v_ego)
-
-
-    # TODO: Check for active, override, and saturation
-    # if active:
-    #   self.path_offset_i += self.LP.d_poly[3] / (60.0 * 20.0)
-    #   self.path_offset_i = clip(self.path_offset_i, -0.5,  0.5)
-    #   self.LP.d_poly[3] += self.path_offset_i
-    # else:
-    #   self.path_offset_i = 0.0
 
     # account for actuation delay
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers - angle_offset, curvature_factor, self.steerRatio, CP.steerActuatorDelay)
@@ -348,7 +347,7 @@ class PathPlanner():
 
     self.cur_state[0].delta = delta_desired
     self.angle_steers_des_mpc = float(math.degrees(delta_desired * self.steerRatio) + angle_offset)
-
+    org_angle_steers_des_mpc = self.angle_steers_des_mpc
 
     if v_ego_kph < 40:
         xp = [0,5,20,40]
@@ -357,25 +356,22 @@ class PathPlanner():
 
         fp2 = [0.1,0.2,0.5,1]
         limit_ratio = interp( v_ego_kph, xp, fp2 )
-        self.angle_steers_des_mpc = self.angle_steers_des_mpc * des_ratio
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, limit_ratio, angle_steers )
+        angle_steers_des = self.angle_steers_des_mpc * des_ratio
+        self.angle_steers_des_mpc = self.limit_ctrl( angle_steers_des, limit_ratio, angle_steers )
 
         if v_ego_kph < 5:
             self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 10 )
         elif v_ego_kph < 10:
             self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 5 )
-    elif abs_angle_steers > 3:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 5, angle_steers )
+        
+    elif self.model_speed < 200:  # corner
+        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 3, angle_steers )
     else:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 1.5, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 1, angle_steers )
 
-
-    if self.LP.l_prob < 0.45 and self.LP.r_prob < 0.45:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 0.1, angle_steers )
-
-    #if active:
-    #   log_str = 'v_ego={:.1f} {}'.format( v_ego * CV.MS_TO_KPH, log_str )
-    #   tracePP.add( log_str )
+    if v_ego_kph > 5:
+       log_str = 'v_ego={:.1f} model_spd={:.1f} steer={:.1f} org={:.1f}'.format( v_ego_kph, self.model_speed, self.angle_steers_des_mpc, org_angle_steers_des_mpc )
+       tracePP.add( log_str )
 
     #  Check for infeasable MPC solution
     mpc_nans = any(math.isnan(x) for x in self.mpc_solution[0].delta)

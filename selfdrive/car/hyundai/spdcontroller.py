@@ -96,8 +96,7 @@ class SpdController():
     self.a_cruise = 0    
 
 
-  def calc_va(self, sm, CS ):
-    v_ego = CS.v_ego
+  def calc_va(self, sm, v_ego ):
     md = sm['model']    
     if len(md.path.poly):
       path = list(md.path.poly)
@@ -106,9 +105,7 @@ class SpdController():
       self.r_poly = np.array(md.rightLane.poly)
       self.p_poly = np.array(md.path.poly)
 
-      #self.l_poly[3] += CAMERA_OFFSET
-      #self.r_poly[3] += CAMERA_OFFSET
-
+ 
       # Curvature of polynomial https://en.wikipedia.org/wiki/Curvature#Curvature_of_the_graph_of_a_function
       # y = a x^3 + b x^2 + c x + d, y' = 3 a x^2 + 2 b x + c, y'' = 6 a x + 2 b
       # k = y'' / (1 + y'^2)^1.5
@@ -127,13 +124,6 @@ class SpdController():
           model_speed = MAX_SPEED
     else:
       model_speed = MAX_SPEED
-
-    #following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
-
-    #following = CS.lead_distance < 100.0
-    #accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following)]
-    #jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
-    #accel_limits_turns = limit_accel_in_turns(v_ego, CS.angle_steers, accel_limits, self.steerRatio, self.wheelbase )
 
     model_speed = self.movAvg.get_min( model_speed, 10 )
 
@@ -184,7 +174,7 @@ class SpdController():
       dec_delta = 1
 
 
-    model_speed = self.calc_va( sm, CS )
+    model_speed = self.calc_va( sm, CS.v_ego )
 
     if set_speed > cur_speed:
         set_speed = cur_speed
@@ -199,8 +189,8 @@ class SpdController():
         if v_delta <= -dec_delta:
           pass
         elif CS.lead_objspd < 0:
-          if dec_delta > 1:
-            set_speed -= (dec_delta - 1)
+          if dec_delta >  0:
+            set_speed -= dec_delta
              # dec value
           self.long_wait_timer = 20
           btn_type = Buttons.SET_DECEL   # Vuttons.RES_ACCEL
