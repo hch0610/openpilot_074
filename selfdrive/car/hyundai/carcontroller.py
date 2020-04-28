@@ -126,7 +126,7 @@ class CarController():
 
     abs_angle_steers =  abs(actuators.steerAngle) #  abs(CS.angle_steers)  # 
 
-    if self.model_speed > 240:
+    if self.model_speed > 250:
       if abs_angle_steers < 2:
           xp = [0,0.5,1,1.5,2]
           fp = [190,225,240,250,param.STEER_MAX]
