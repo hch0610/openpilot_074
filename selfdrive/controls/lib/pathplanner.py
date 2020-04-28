@@ -105,12 +105,13 @@ class PathPlanner():
 
 
   def limit_ctrl(self, value, limit, offset ):
-      p_limit = limit + offset
-      m_limit = limit - offset
+      p_limit = offset + limit
+      m_limit = offset - limit
+
       if value > p_limit:
           value = p_limit
-      elif  value < -m_limit:
-          value = -m_limit
+      elif  value < m_limit:
+          value = m_limit
       return value
 
   def setup_mpc(self):
@@ -266,7 +267,7 @@ class PathPlanner():
 
 
     abs_angle_steers = abs(angle_steers)
-    if v_ego_kph < 10:
+    if v_ego_kph < 5:
       self.steerRatio = self.sR[0] * 0.6
     elif v_ego_kph > 40:  # 11.111:
       # boost steerRatio by boost amount if desired steer angle is high
@@ -346,31 +347,35 @@ class PathPlanner():
       rate_desired = 0.0
 
     self.cur_state[0].delta = delta_desired
-    self.angle_steers_des_mpc = float(math.degrees(delta_desired * self.steerRatio) + angle_offset)
-    org_angle_steers_des_mpc = self.angle_steers_des_mpc
+    org_angle_steers_des = float(math.degrees(delta_desired * self.steerRatio) + angle_offset)
+    self.angle_steers_des_mpc = org_angle_steers_des
 
     if v_ego_kph < 40:
         xp = [0,5,20,40]
-        fp1 = [0.1,0.25,0.5,1]
-        des_ratio = interp( v_ego_kph, xp, fp1 )
-
         fp2 = [0.1,0.2,0.5,1]
         limit_ratio = interp( v_ego_kph, xp, fp2 )
-        angle_steers_des = self.angle_steers_des_mpc * des_ratio
-        self.angle_steers_des_mpc = self.limit_ctrl( angle_steers_des, limit_ratio, angle_steers )
+        angle_steers_des = self.limit_ctrl( org_angle_steers_des, limit_ratio, angle_steers )
 
         if v_ego_kph < 5:
-            self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 10 )
+            self.angle_steers_des_mpc = self.movAvg.get_data( angle_steers_des, 10 )
         elif v_ego_kph < 10:
-            self.angle_steers_des_mpc = self.movAvg.get_data( self.angle_steers_des_mpc, 5 )
-        
-    elif self.model_speed < 200:  # corner
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 3, angle_steers )
+            self.angle_steers_des_mpc = self.movAvg.get_data( angle_steers_des, 5 )
+        else:
+            self.angle_steers_des_mpc = angle_steers_des
+
+    elif self.model_speed > 250:  # corner
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.1, angle_steers )
+    elif self.model_speed > 200:  # corner
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.5, angle_steers )
+    elif self.model_speed > 150:  # corner
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 1, angle_steers )
+    elif self.model_speed > 100:  # corner
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 3, angle_steers )
     else:
-        self.angle_steers_des_mpc = self.limit_ctrl( self.angle_steers_des_mpc, 1, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 5, angle_steers )
 
     if v_ego_kph > 5:
-       log_str = 'v_ego={:.1f} model_spd={:.1f} steer={:.1f} org={:.1f}'.format( v_ego_kph, self.model_speed, self.angle_steers_des_mpc, org_angle_steers_des_mpc )
+       log_str = 'v_ego={:.1f} model_spd={:.1f} cur_steer={:.1f} dst_steer={:.1f} org={:.1f}'.format( v_ego_kph, self.model_speed, angle_steers, self.angle_steers_des_mpc, org_angle_steers_des )
        tracePP.add( log_str )
 
     #  Check for infeasable MPC solution
