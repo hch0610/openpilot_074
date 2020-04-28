@@ -200,11 +200,11 @@ class SpdController():
     #dRel, yRel, vRel = self.get_lead( sm, CS )
     # CS.driverOverride   # 1 Acc,  2 bracking, 0 Normal
 
-    #str1 = 'dis={:.0f}/{:.1f} VS={:.0f} ss={:.0f}'.format( CS.lead_distance, CS.lead_objspd, CS.VSetDis, CS.cruise_set_speed_kph )
-    #str3 = 'curvature={:.0f} L={:.1f} R={:.1f}'.format( model_speed, self.l_poly[3], self.r_poly[3] )
+    str1 = 'dis={:.0f}/{:.1f} VS={:.0f} ss={:.0f}'.format( CS.lead_distance, CS.lead_objspd, CS.VSetDis, CS.cruise_set_speed_kph )
+    str3 = 'curvature={:.0f}'.format( model_speed )
 
 
-    #trace1.printf2( '{} {}'.format( str1, str3) )
+    trace1.printf2( '{} {}'.format( str1, str3) )
     #if CS.pcm_acc_status and CS.AVM_Popup_Msg == 1 and CS.VSetDis > 30  and CS.lead_distance < 90:
     #  str2 = 'btn={:.0f} btn_type={}  v{:.5f} a{:.5f}  v{:.5f} a{:.5f}'.format(  CS.AVM_View, btn_type, self.v_model, self.a_model, self.v_cruise, self.a_cruise )
     #  self.traceSC.add( 'v_ego={:.1f} angle={:.1f}  {} {} {}'.format( v_ego_kph, CS.angle_steers, str1, str2, str3 )  ) 
