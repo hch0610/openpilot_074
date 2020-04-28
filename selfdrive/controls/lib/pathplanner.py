@@ -364,9 +364,9 @@ class PathPlanner():
             self.angle_steers_des_mpc = angle_steers_des
 
     elif self.model_speed > 250:  # corner
-        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.1, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.3, angle_steers )
     elif self.model_speed > 200:  # corner
-        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.5, angle_steers )
+        self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 0.7, angle_steers )
     elif self.model_speed > 150:  # corner
         self.angle_steers_des_mpc = self.limit_ctrl( org_angle_steers_des, 1, angle_steers )
     elif self.model_speed > 100:  # corner
